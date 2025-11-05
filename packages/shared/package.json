@@ -1,0 +1,32 @@
+{
+  "name": "@github-tracker/shared",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm --clean",
+    "dev": "tsup src/index.ts --dts --format esm --watch",
+    "lint": "eslint .",
+    "test": "vitest",
+    "clean": "rimraf dist"
+  },
+  "author": "Noel Sagaille",
+  "license": "ISC",
+  "packageManager": "pnpm@10.20.0",
+  "devDependencies": {
+    "@github-tracker/tsconfig": "workspace:*",
+    "eslint": "^9.39.1",
+    "rimraf": "^6.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}

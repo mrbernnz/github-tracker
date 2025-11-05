@@ -1,0 +1,10 @@
+{
+  "extends": "@github-tracker/tsconfig/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@github-tracker/shared": ["../../packages/shared/src"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}
