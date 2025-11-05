@@ -1,49 +1,51 @@
 import {GraphQLError} from 'graphql';
-import type {GraphQLContext, Release, Repository} from './context';
-
-const toArray = <T>(m: Map<string, T>): T[] => Array.from(m.values());
-
-function makeRepoId(owner: string, name: string) {
-  return `repo_${owner}_${name}`.toLowerCase();
-}
+import {ReleaseEntity} from '../entities/Release';
+import {RepositoryEntity} from '../entities/Repository';
+import type {GraphQLContext, Repository} from './context';
 
 export const resolvers = {
   Query: {
-    releases: (_: unknown, __: unknown, ctx: GraphQLContext): Release[] => {
-      const list = toArray(ctx.data.releases);
-      return list.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1));
+    releases: async (_: unknown, __: unknown, ctx: GraphQLContext): Promise<ReleaseEntity[]> => {
+      const repo = ctx.db.getRepository(ReleaseEntity);
+      return await repo.find({order: {publishedAt: 'DESC'}});
     }
   },
   Mutation: {
-    addRepository: (
+    addRepository: async (
       _: unknown,
       args: {input: {owner: string; name: string; url?: string | null}},
       ctx: GraphQLContext
-    ): Repository => {
+    ): Promise<Repository> => {
       const owner = args.input.owner.trim();
       const name = args.input.name.trim();
+
       if (!owner || !name) {
         throw new GraphQLError('owner and name are required');
       }
-      const id = makeRepoId(owner, name);
 
-      const existing = ctx.data.repositories.get(id);
-      if (existing) return existing;
+      const existing = ctx.db.getRepository(RepositoryEntity);
+      await existing.upsert(
+        {owner, name, url: args.input.url ?? `https://github.com/${owner}/${name}`},
+        {conflictPaths: ['owner', 'name'], skipUpdateIfNoValuesChanged: true}
+      );
 
-      const url = args.input.url ?? `https://github.com/${owner}/${name}`;
-      const repo: Repository = {id, owner, name, url};
-      ctx.data.repositories.set(id, repo);
-      return repo;
+      return existing.findOneByOrFail({owner, name});
     },
+    markReleaseSeen: async (
+      _: unknown,
+      args: {id: string},
+      ctx: GraphQLContext
+    ): Promise<ReleaseEntity> => {
+      const rel = ctx.db.getRepository(ReleaseEntity);
+      const existing = await rel.findOneBy({id: args.id});
 
-    markReleaseSeen: (_: unknown, args: {id: string}, ctx: GraphQLContext): Release => {
-      const rel = ctx.data.releases.get(args.id);
-      if (!rel) {
+      if (!existing) {
         throw new GraphQLError(`Release not found: ${args.id}`);
       }
-      const updated = {...rel, seen: true};
-      ctx.data.releases.set(args.id, updated);
-      return updated;
+
+      existing.seen = true;
+      await rel.save(existing);
+      return existing;
     }
   }
 };

@@ -1,10 +1,11 @@
-// import 'dotenv/config';
 import cors from '@koa/cors';
+import 'dotenv/config';
 import {createHandler} from 'graphql-http/lib/use/koa';
 import Koa, {Context, Next} from 'koa';
 import bodyParser from 'koa-bodyparser';
 import {ruruHTML} from 'ruru/server';
 import {ENV} from '../env';
+import {AppDataSource} from './db/data-source';
 import {buildContext, schema} from './graphql';
 
 function acceptsHtml(ctx: Koa.Context) {
@@ -36,7 +37,14 @@ app.use((ctx: Context, next: Next) => {
   return next();
 });
 
-app.use(createHandler({schema, context: (_req, ctx) => buildContext(ctx)}));
+app.use(
+  createHandler({
+    schema,
+    context: (_req, ctx) => buildContext(ctx, AppDataSource)
+  })
+);
+
+await AppDataSource.initialize();
 
 app.listen(ENV.PORT, () => {
   console.log(`Server is running on port ${ENV.PORT}`);

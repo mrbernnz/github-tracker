@@ -17,6 +17,7 @@ const typeDefs = /* GraphQL */ `
     tag: String!
     publishedAt: String!
     seen: Boolean!
+    repository: Repository!
   }
 
   input AddRepositoryInput {

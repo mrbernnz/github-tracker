@@ -1,5 +1,5 @@
 import type Koa from 'koa';
-import type {DefaultContext, DefaultState} from 'koa';
+import type {DataSource} from 'typeorm';
 import {ENV} from '../../env';
 
 export type Repository = {
@@ -19,22 +19,14 @@ export type Release = {
   seen: boolean;
 };
 
-const repositories = new Map<string, Repository>();
-const releases = new Map<string, Release>();
-
-export type DataSource = {
-  repositories: Map<string, Repository>;
-  releases: Map<string, Release>;
-};
-
 export type GraphQLContext = {
   env: typeof ENV;
   requestId: string;
-  koa: Koa.ParameterizedContext<DefaultState, DefaultContext>;
-  data: DataSource;
+  koa: Koa.Context;
+  db: DataSource;
 };
 
-export function buildContext(ctx: Koa.Context): GraphQLContext {
+export function buildContext(ctx: Koa.Context, db: DataSource): GraphQLContext {
   const requestId = crypto.randomUUID();
-  return {env: ENV, requestId, koa: ctx, data: {repositories, releases}};
+  return {env: ENV, requestId, koa: ctx, db};
 }

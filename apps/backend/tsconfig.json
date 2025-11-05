@@ -1,5 +1,10 @@
 {
   "extends": "@github-tracker/tsconfig/base.json",
-  "compilerOptions": {"outDir": "dist"},
+  "compilerOptions": {
+    "outDir": "dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false
+  },
   "include": ["src", "env.d.ts"]
 }
