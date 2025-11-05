@@ -1,9 +1,16 @@
 // import 'dotenv/config';
 import cors from '@koa/cors';
-import Router from '@koa/router';
+import {createHandler} from 'graphql-http/lib/use/koa';
 import Koa, {Context, Next} from 'koa';
 import bodyParser from 'koa-bodyparser';
+import {ruruHTML} from 'ruru/server';
 import {ENV} from '../env';
+import {buildContext, schema} from './graphql';
+
+function acceptsHtml(ctx: Koa.Context) {
+  const accept = ctx.get('accept');
+  return accept && accept.includes('text/html');
+}
 
 const app = new Koa();
 
@@ -20,21 +27,16 @@ app.use(async (ctx: Context, next: Next) => {
 app.use(cors());
 app.use(bodyParser());
 
-const router = new Router({prefix: '/api'});
-
-router.get('/releases', (ctx) => {
-  ctx.body = {message: 'getting repo release info.'};
+app.use((ctx: Context, next: Next) => {
+  if (ctx.path === '/graphql' && ctx.method === 'GET' && acceptsHtml(ctx)) {
+    ctx.type = 'text/html';
+    ctx.body = ruruHTML({endpoint: '/graphql'});
+    return;
+  }
+  return next();
 });
 
-router.put('/releases/:id', (ctx) => {
-  ctx.body = {message: 'marked release as seen.'};
-});
-
-router.post('/repositories', (ctx) => {
-  ctx.body = {message: 'add repository to track.'};
-});
-
-app.use(router.routes()).use(router.allowedMethods());
+app.use(createHandler({schema, context: (_req, ctx) => buildContext(ctx)}));
 
 app.listen(ENV.PORT, () => {
   console.log(`Server is running on port ${ENV.PORT}`);
