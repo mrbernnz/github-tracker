@@ -1,9 +1,9 @@
 // import 'dotenv/config';
-import {hello} from '@github-tracker/shared';
-import Koa, {Context, Next, HttpError} from 'koa';
 import cors from '@koa/cors';
-import bodyParser from 'koa-bodyparser';
 import Router from '@koa/router';
+import Koa, {Context, Next} from 'koa';
+import bodyParser from 'koa-bodyparser';
+import {ENV} from '../env';
 
 const app = new Koa();
 
@@ -34,10 +34,10 @@ router.post('/repositories', (ctx) => {
   ctx.body = {message: 'add repository to track.'};
 });
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
-
 app.use(router.routes()).use(router.allowedMethods());
+
+app.listen(ENV.PORT, () => {
+  console.log(`Server is running on port ${ENV.PORT}`);
+});
 
 export default app;
